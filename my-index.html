@@ -292,6 +292,7 @@
     <div class="flex gap-4 mb-6">
         <button id="tz-button" class="game-button primary">Техническое задание</button>
         <button id="submit-button" class="game-button success">Я починил</button>
+        <button id="undo-button" class="game-button undo">отменить ход</button>
     </div>
     
     <div id="message" class="mt-6 text-xl font-bold text-transparent"></div>
@@ -344,6 +345,7 @@
             const rowLabels = document.getElementById('row-labels');
             const messageEl = document.getElementById('message');
             const submitButton = document.getElementById('submit-button');
+            const undoButton = document.getElementById('undo-button');
             let lights = [
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, ],
@@ -367,6 +369,7 @@
             let moves = [];
             let moveCount = 0;
             let labelChars = [];
+            let charsToCol={};
             
             function initColumnLabels() {
                 colLabels.innerHTML = '';
@@ -385,6 +388,8 @@
                 }
                 
                 for (let col = 0; col < boardWidth; col++) {
+                    let index=labelChars[col]
+                    charsToCol[index]= col;
                     const label = document.createElement('div');
                     label.classList.add('label');
                     label.textContent = labelChars[col];
@@ -435,6 +440,15 @@
                 moveCount++;
                 updateSubmitButton();
                 
+                toggleLightInternal(row, col);
+                updateBoard();
+                checkBoardMatchesTz();
+            }
+
+            function toggleLightUndo(row, col) {
+                moveCount--;
+                updateSubmitButton();
+
                 toggleLightInternal(row, col);
                 updateBoard();
                 checkBoardMatchesTz();
@@ -537,6 +551,24 @@
                     }
                 });
             });
+
+            undoButton.addEventListener('click',()=>{
+                if(moves.length===0)
+                    alert("Нечего отменять")
+                let m;
+                m=moves.pop();
+                toggleLightUndo(textToRow(m),textToCol(m));
+            });
+
+            function textToCol(text) {
+                let col=charsToCol[text[0]]
+                return col;
+            }
+
+            function textToRow(text) {
+                let row=parseInt(text[1])
+                return row;
+            }
             
             submitButton.addEventListener('click', () => {
                 fetch('/', {
