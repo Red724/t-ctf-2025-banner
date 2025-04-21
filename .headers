@@ -7,5 +7,23 @@
         "value": "text/html; charset=UTF-8"
       }
     ]
+  },
+  {
+    "applyTo": "service-worker.js",
+    "headers": [
+      {
+        "name": "content-type",
+        "value": "text/javascript"
+      }
+    ]
+  },
+  {
+    "applyTo": "banner.js",
+    "headers": [
+      {
+        "name": "content-type",
+        "value": "text/html; charset=UTF-8"
+      }
+    ]
   }
- ]
+]
