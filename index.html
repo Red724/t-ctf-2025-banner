@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Капибаннер</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        .light {
+            transition: all 0.2s ease;
+            width: 12px;
+            height: 12px;
+        }
+        .light.on {
+            background-color: #f9d65d;
+            box-shadow: 0 0 5px #f9d65d;
+        }
+        .light.on.bright {
+            background-color: #fff9de;
+            box-shadow: 0 0 10px #ffe347,  0 0 10px #fff3af;
+        }
+        .light.off {
+            background-color: #334155;
+        }
+        #game-container {
+            overflow-x: auto;
+            max-width: 100%;
+            padding: 0;
+            background-color: #1e293b;
+            border: 8px solid #475569;
+            border-radius: 12px;
+            position: relative;
+            box-shadow: 
+                0 0 30px rgba(30, 41, 59, 0.8),
+                0 0 60px rgba(0, 0, 0, 0.4);
+        }
+        #game-container::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 15px;
+            background-color: #334155;
+            border-radius: 8px 8px 0 0;
+            border-top: 4px solid #475569;
+            border-left: 4px solid #475569;
+            border-right: 4px solid #475569;
+        }
+        .game-grid-container {
+            display: grid;
+            grid-template-columns: 20px 1fr;
+            grid-template-rows: 20px 1fr;
+            grid-template-areas: 
+                "empty col-labels"
+                "row-labels game-board";
+            padding: 12px;
+            padding-right: 24px;
+            padding-bottom: 24px;
+            background-color: #0f172a;
+            border-radius: 4px;
+            margin: 12px;
+        }
+        .col-labels {
+            grid-area: col-labels;
+            display: grid;
+            grid-template-columns: repeat(60, 12px);
+            gap: 2px;
+        }
+        .row-labels {
+            grid-area: row-labels;
+            display: grid;
+            grid-template-rows: repeat(8, 12px);
+            gap: 2px;
+        }
+        .label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: #64748b;
+            font-family: monospace;
+            font-weight: bold;
+        }
+        #game-board {
+            grid-area: game-board;
+            display: grid;
+            grid-template-columns: repeat(60, 12px);
+            grid-template-rows: repeat(8, 12px);
+            gap: 2px;
+        }
+        .sign-screws {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: #94a3b8;
+            border-radius: 50%;
+            box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.5);
+        }
+        .sign-screw-1 { top: 10px; left: 10px; }
+        .sign-screw-2 { top: 10px; right: 10px; }
+        .sign-screw-3 { bottom: 10px; left: 10px; }
+        .sign-screw-4 { bottom: 10px; right: 10px; }
+        
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .popup-content {
+            background-color: #1e293b;
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 80%;
+            max-height: 80%;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            animation: popupFadeIn 0.3s ease-out;
+        }
+        
+        @keyframes popupFadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .popup-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding-bottom: 2px;
+            background-color: #475569;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+        
+        .popup-close:hover {
+            background-color: #64748b;
+        }
+        
+        .game-button {
+            padding: 8px 16px;
+            background-color: #1e293b;
+            color: #e2e8f0;
+            font-weight: medium;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            border: 2px solid #475569;
+            position: relative;
+            box-shadow: 
+                0 0 10px rgba(30, 41, 59, 0.8),
+                0 0 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .game-button:hover {
+            background-color: #334155;
+            transform: translateY(-2px);
+            box-shadow: 
+                0 0 15px rgba(30, 41, 59, 0.9),
+                0 0 30px rgba(0, 0, 0, 0.4);
+        }
+        
+        .game-button:active {
+            transform: translateY(1px);
+            box-shadow: 
+                0 0 5px rgba(30, 41, 59, 0.7),
+                0 0 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .game-button.primary {
+            border-color: #3b82f6;
+        }
+        
+        .game-button.success {
+            border-color: #10b981;
+        }
+        
+        .success-popup .popup-content {
+            border: 3px solid #10b981;
+            background-color: #0f172a;
+        }
+        
+        .success-header {
+            color: #10b981;
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .success-header svg {
+            margin-right: 8px;
+        }
+        
+        .error-popup .popup-content {
+            border: 3px solid #ef4444;
+            background-color: #0f172a;
+        }
+        
+        .error-header {
+            color: #ef4444;
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .error-header svg {
+            margin-right: 8px;
+        }
+        
+        .flag-container {
+            background-color: #1e293b;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 18px;
+            font-weight: bold;
+            color: #10b981;
+            text-align: center;
+            margin: 16px 0;
+            border: 1px dashed #10b981;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .flag-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 0%,
+                rgba(16, 185, 129, 0.1) 50%,
+                transparent 100%
+            );
+            animation: shine 3s linear infinite;
+        }
+        
+        @keyframes shine {
+            0% { transform: translate(-30%, -30%) rotate(0deg); }
+            100% { transform: translate(-30%, -30%) rotate(360deg); }
+        }
+        
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2000;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="text-center mb-5">
+        <h1 class="text-5xl font-bold text-[#f9d65d] mb-2">Добро пожаловать в наш родной</h1>
+    </div>
+    
+    <div id="game-container" class="mb-8">
+        <div class="sign-screws sign-screw-1"></div>
+        <div class="sign-screws sign-screw-2"></div>
+        <div class="sign-screws sign-screw-3"></div>
+        <div class="sign-screws sign-screw-4"></div>
+        <div class="game-grid-container">
+            <div class="col-labels" id="col-labels"></div>
+            <div class="row-labels" id="row-labels"></div>
+            <div id="game-board"></div>
+        </div>
+    </div>
+    
+    <div class="flex gap-4 mb-6">
+        <button id="tz-button" class="game-button primary">Техническое задание</button>
+        <button id="submit-button" class="game-button success">Я починил</button>
+    </div>
+    
+    <div id="message" class="mt-6 text-xl font-bold text-transparent"></div>
+    
+    <div id="tz-popup" class="popup-overlay">
+        <div class="popup-content">
+            <button class="popup-close">&times;</button>
+            <img src="/tz.png" alt="Техническое задание" style="max-width: 100%; max-height: 70vh;">
+        </div>
+    </div>
+    
+    <div id="success-popup" class="popup-overlay success-popup">
+        <div class="popup-content">
+            <button class="popup-close">&times;</button>
+            <div class="success-header">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <h2 class="text-2xl font-bold">Успех!</h2>
+            </div>
+            <p class="text-slate-300 mb-4">Отличная работа! Вы успешно починили знак.</p>
+            <div class="flag-container" id="flag-text"></div>
+            <canvas id="confetti-canvas"></canvas>
+        </div>
+    </div>
+    
+    <div id="error-popup" class="popup-overlay error-popup">
+        <div class="popup-content">
+            <button class="popup-close">&times;</button>
+            <div class="error-header">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+                <h2 class="text-2xl font-bold">Ошибка</h2>
+            </div>
+            <p class="text-slate-300 mb-2">Работа не принята:</p>
+            <p class="text-slate-100 font-medium" id="error-message"></p>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const boardWidth = 60;
+            const boardHeight = 8;
+            const board = document.getElementById('game-board');
+            const colLabels = document.getElementById('col-labels');
+            const rowLabels = document.getElementById('row-labels');
+            const messageEl = document.getElementById('message');
+            const submitButton = document.getElementById('submit-button');
+            let lights = [
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, ],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, ],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, ],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, ],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, ],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, ],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+            ];
+            let tz = [
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+                [0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, ],
+                [0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, ],
+                [0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, ],
+                [0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, ],
+                [0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, ],
+                [0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, ],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+            ];
+            let moves = [];
+            let moveCount = 0;
+            let labelChars = [];
+            
+            function initColumnLabels() {
+                colLabels.innerHTML = '';
+                labelChars = [];
+                
+                for (let i = 65; i <= 90; i++) {
+                    labelChars.push(String.fromCharCode(i));
+                }
+                
+                for (let i = 97; i <= 122; i++) {
+                    labelChars.push(String.fromCharCode(i));
+                }
+                
+                for (let i = 0; i <= 7; i++) {
+                    labelChars.push(i.toString());
+                }
+                
+                for (let col = 0; col < boardWidth; col++) {
+                    const label = document.createElement('div');
+                    label.classList.add('label');
+                    label.textContent = labelChars[col];
+                    colLabels.appendChild(label);
+                }
+            }
+            
+            function initRowLabels() {
+                rowLabels.innerHTML = '';
+                for (let row = 0; row < boardHeight; row++) {
+                    const label = document.createElement('div');
+                    label.classList.add('label');
+                    label.textContent = row.toString();
+                    rowLabels.appendChild(label);
+                }
+            }
+            
+            function initBoard() {
+                board.innerHTML = '';
+                moves = [];
+                moveCount = 0;
+                updateSubmitButton();
+                
+                for (let row = 0; row < boardHeight; row++) {
+                    for (let col = 0; col < boardWidth; col++) {
+                        const light = document.createElement('div');
+                        light.classList.add(
+                            'light', 'off', 
+                            'rounded-sm', 
+                            'cursor-pointer'
+                        );
+                        light.dataset.row = row;
+                        light.dataset.col = col;
+                        light.addEventListener('click', () => toggleLight(row, col));
+                        board.appendChild(light);
+                    }
+                }
+                
+                updateBoard();
+                messageEl.textContent = '';
+                messageEl.classList.add('text-transparent');
+                messageEl.classList.remove('text-green-400');
+            }
+            
+            function toggleLight(row, col) {
+                const moveNotation = labelChars[col] + row.toString();
+                moves.push(moveNotation);
+                moveCount++;
+                updateSubmitButton();
+                
+                toggleLightInternal(row, col);
+                updateBoard();
+                checkBoardMatchesTz();
+            }
+            
+            function updateSubmitButton() {
+                if (moveCount === 0) {
+                    submitButton.textContent = "Я починил";
+                } else {
+                    const clickText = getClickText(moveCount);
+                    submitButton.textContent = `Я починил за ${moveCount} ${clickText}`;
+                }
+            }
+            
+            function getClickText(count) {
+                if (count % 10 === 1 && count % 100 !== 11) {
+                    return "клик";
+                } else if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) {
+                    return "клика";
+                } else {
+                    return "кликов";
+                }
+            }
+            
+            function toggleLightInternal(row, col) {
+                for (let c = 0; c < boardWidth; c++) {
+                    lights[row][c] = !lights[row][c];
+                }
+                
+                for (let r = 0; r < boardHeight; r++) {
+                    if (r !== row) {
+                        lights[r][col] = !lights[r][col];
+                    }
+                }
+            }
+            
+            function updateBoard() {
+                const lightElements = board.querySelectorAll('.light');
+                for (let row = 0; row < boardHeight; row++) {
+                    for (let col = 0; col < boardWidth; col++) {
+                        const index = row * boardWidth + col;
+                        const light = lightElements[index];
+                        
+                        if (lights[row][col]) {
+                            light.classList.add('on');
+                            light.classList.remove('off');
+                        } else {
+                            light.classList.add('off');
+                            light.classList.remove('on');
+                        }
+                    }
+                }
+            }
+            
+            function checkBoardMatchesTz() {
+                let matches = true;
+                
+                for (let row = 0; row < boardHeight; row++) {
+                    for (let col = 0; col < boardWidth; col++) {
+                        if (lights[row][col] != tz[row][col]) {
+                            matches = false;
+                            break;
+                        }
+                    }
+                    if (!matches) break;
+                }
+                
+                const lightElements = board.querySelectorAll('.light.on');
+                if (matches) {
+                    lightElements.forEach(light => light.classList.add('bright'));
+                } else {
+                    lightElements.forEach(light => light.classList.remove('bright'));
+                }
+                
+                return matches;
+            }
+            
+            const tzButton = document.getElementById('tz-button');
+            const tzPopup = document.getElementById('tz-popup');
+            const successPopup = document.getElementById('success-popup');
+            const errorPopup = document.getElementById('error-popup');
+            const popupCloseButtons = document.querySelectorAll('.popup-close');
+            
+            tzButton.addEventListener('click', () => {
+                tzPopup.style.display = 'flex';
+            });
+            
+            popupCloseButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tzPopup.style.display = 'none';
+                    successPopup.style.display = 'none';
+                    errorPopup.style.display = 'none';
+                });
+            });
+            
+            [tzPopup, successPopup, errorPopup].forEach(popup => {
+                popup.addEventListener('click', (e) => {
+                    if (e.target === popup) {
+                        popup.style.display = 'none';
+                    }
+                });
+            });
+            
+            submitButton.addEventListener('click', () => {
+                fetch('/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        moves: moves
+                    }),
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        document.getElementById('flag-text').textContent = result.flag;
+                        successPopup.style.display = 'flex';
+                        createConfetti();
+                    } else {
+                        document.getElementById('error-message').textContent = result.message;
+                        errorPopup.style.display = 'flex';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('error-message').textContent = 'Ошибка соединения: ' + error.message;
+                    errorPopup.style.display = 'flex';
+                });
+            });
+            
+            function createConfetti() {
+                const canvas = document.getElementById('confetti-canvas');
+                const myConfetti = confetti.create(canvas, { resize: true });
+                
+                const colors = ['#10b981', '#3b82f6', '#f9d65d', '#8b5cf6', '#f43f5e'];
+                
+                const duration = 5000;
+                const interval = 250;
+                const totalBursts = 10;
+                
+                function launchConfetti(i) {
+                    if (i >= totalBursts) return;
+                    
+                    setTimeout(() => {
+                        myConfetti({
+                            particleCount: 100,
+                            spread: 100,
+                            origin: { y: 0, x: Math.random() },
+                            colors: colors,
+                            gravity: 0.8,
+                            scalar: 0.3,
+                            ticks: 200,
+                            startVelocity: 30,
+                            shapes: ['circle', 'square']
+                        });
+                        
+                        launchConfetti(i + 1);
+                    }, interval);
+                }
+                
+                launchConfetti(0);
+            }
+            
+            initColumnLabels();
+            initRowLabels();
+            initBoard();
+        });
+    </script>
+</body>
+</html>
