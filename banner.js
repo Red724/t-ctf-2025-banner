@@ -182,8 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * Отменяет последний ход внутри данных программы, без отображения.
-     * Изменяет историю ходов
+     * Переключает 1 пиксель сделав 67 ходов
      */
     function toggleOnePixel(row, col){
         makeMove(row, col);
