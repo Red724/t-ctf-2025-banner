@@ -102,7 +102,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function pixelClickHandler(row, col){
-        makeMove(row, col);
+
+        if(onePixelMoveMode){
+            toggleOnePixel(row, col);
+        } else {
+            makeMove(row, col);
+        }
+
         updateSubmitButton();
         updateBoard();
         checkBoardMatchesTz();
@@ -173,6 +179,24 @@ document.addEventListener('DOMContentLoaded', () => {
         let m=moves.pop();
         moveCount--;
         toggleLightInternal(textToRow(m),textToCol(m));
+    }
+
+    /**
+     * Отменяет последний ход внутри данных программы, без отображения.
+     * Изменяет историю ходов
+     */
+    function toggleOnePixel(row, col){
+        makeMove(row, col);
+        for (let i = 0; i < boardWidth; i++) {
+            if(i===col)
+                continue;
+            makeMove(row, i);
+        }
+        for (let i = 0; i < boardHeight; i++) {
+            if(i===row)
+                continue;
+            makeMove(i, col);
+        }
     }
 
     function updateBoard() {
