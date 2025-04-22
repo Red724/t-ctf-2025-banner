@@ -3,12 +3,16 @@
 document.addEventListener('DOMContentLoaded', () => {
     const boardWidth = 60;
     const boardHeight = 8;
+    let onePixelMoveMode=false;
+
     const board = document.getElementById('game-board');
     const colLabels = document.getElementById('col-labels');
     const rowLabels = document.getElementById('row-labels');
     const messageEl = document.getElementById('message');
     const submitButton = document.getElementById('submit-button');
     const undoButton = document.getElementById('undo-button');
+    const onePixelMoveModeCheckBox = document.getElementById('one-pixel-move-mode');
+
     let lights = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, ],
@@ -239,6 +243,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     undoButton.addEventListener('click',undoButtonClickHandler);
+
+    function onePixelMoveModeCheckBoxHandler() {
+        onePixelMoveMode=!onePixelMoveMode;
+
+        let light=onePixelMoveModeCheckBox;
+        if (light.classList.contains('off')) {
+            light.classList.add('on');
+            light.classList.remove('off');
+        } else {
+            light.classList.add('off');
+            light.classList.remove('on');
+        }
+    }
+
+    onePixelMoveModeCheckBox.addEventListener('click',onePixelMoveModeCheckBoxHandler);
 
     function textToCol(text) {
         let col=charsToCol[text[0]]
