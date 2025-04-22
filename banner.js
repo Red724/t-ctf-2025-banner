@@ -1,3 +1,5 @@
+// noinspection DuplicatedCode
+
 document.addEventListener('DOMContentLoaded', () => {
     const boardWidth = 60;
     const boardHeight = 8;
@@ -84,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 );
                 light.dataset.row = row;
                 light.dataset.col = col;
-                light.addEventListener('click', () => toggleLight(row, col));
+                light.addEventListener('click', pixelClickHandler.bind(null,row,col));
                 board.appendChild(light);
             }
         }
@@ -95,22 +97,20 @@ document.addEventListener('DOMContentLoaded', () => {
         messageEl.classList.remove('text-green-400');
     }
 
-    function toggleLight(row, col) {
-        const moveNotation = labelChars[col] + row.toString();
-        moves.push(moveNotation);
-        moveCount++;
+    function pixelClickHandler(row, col){
+        makeMove(row, col);
         updateSubmitButton();
-
-        toggleLightInternal(row, col);
         updateBoard();
         checkBoardMatchesTz();
     }
 
-    function toggleLightUndo(row, col) {
-        moveCount--;
+    function undoButtonClickHandler(){
+        if(moves.length===0){
+            alert("Нечего отменять");
+            return;
+        }
+        undoMove();
         updateSubmitButton();
-
-        toggleLightInternal(row, col);
         updateBoard();
         checkBoardMatchesTz();
     }
@@ -134,6 +134,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    /**
+     * Выполняет ход внутри данных программы.
+     * Не изменяет историю.
+     */
     function toggleLightInternal(row, col) {
         for (let c = 0; c < boardWidth; c++) {
             lights[row][c] = !lights[row][c];
@@ -144,6 +148,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 lights[r][col] = !lights[r][col];
             }
         }
+    }
+
+    /**
+     * Делает ход внутри данных программы, без отображения.
+     * Изменяет историю ходов
+     */
+    function makeMove(row, col) {
+        const moveNotation = labelChars[col] + row.toString();
+        moves.push(moveNotation);
+        moveCount++;
+        toggleLightInternal(row, col);
+    }
+
+    /**
+     * Отменяет последний ход внутри данных программы, без отображения.
+     * Изменяет историю ходов
+     */
+    function undoMove() {
+        let m=moves.pop();
+        moveCount--;
+        toggleLightInternal(textToRow(m),textToCol(m));
     }
 
     function updateBoard() {
@@ -213,13 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    undoButton.addEventListener('click',()=>{
-        if(moves.length===0)
-            alert("Нечего отменять")
-        let m;
-        m=moves.pop();
-        toggleLightUndo(textToRow(m),textToCol(m));
-    });
+    undoButton.addEventListener('click',undoButtonClickHandler);
 
     function textToCol(text) {
         let col=charsToCol[text[0]]
