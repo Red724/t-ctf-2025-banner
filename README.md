@@ -6,6 +6,7 @@
 
 * Отмена последнего действия (с сохранением истории)
 * Переключение одиночного пикселя за 67 ходов
+* Сброс к начальному состоянию
 
 Инъекция скрипта происходит через стандартный механизм devtools 
 [local overrides](https://developer.chrome.com/docs/devtools/overrides?utm_source=devtools)

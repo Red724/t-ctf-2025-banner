@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const messageEl = document.getElementById('message');
     const submitButton = document.getElementById('submit-button');
     const undoButton = document.getElementById('undo-button');
+    const resetButton = document.getElementById('reset-button');
     const onePixelMoveModeCheckBox = document.getElementById('one-pixel-move-mode');
 
     let lights = [
@@ -120,6 +121,15 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         undoMove();
+        updateSubmitButton();
+        updateBoard();
+        checkBoardMatchesTz();
+    }
+
+    function resetButtonClickHandler(){
+        while (moves.length>0){
+            undoMove();
+        }
         updateSubmitButton();
         updateBoard();
         checkBoardMatchesTz();
@@ -266,6 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     undoButton.addEventListener('click',undoButtonClickHandler);
+    resetButton.addEventListener('click',resetButtonClickHandler);
 
     function onePixelMoveModeCheckBoxHandler() {
         onePixelMoveMode=!onePixelMoveMode;
