@@ -120,7 +120,15 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Нечего отменять");
             return;
         }
-        undoMove();
+
+        if(onePixelMoveMode){
+            for (let i = 0; i < 67; i++) {
+                undoMove();
+            }
+        } else {
+            undoMove();
+        }
+
         updateSubmitButton();
         updateBoard();
         checkBoardMatchesTz();
