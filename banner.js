@@ -1,5 +1,12 @@
 // noinspection DuplicatedCode
 
+const GameMode = {
+    STANDARD: 'standard',
+    TOGGLE_ROW: 'toggle_row',
+    TOGGLE_COLUMN: 'toggle_column',
+    ONE_PIXEL: 'one_pixel',
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     const boardWidth = 60;
     const boardHeight = 8;
@@ -37,6 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
     let moves = [];
     let moveCount = 0;
+    let mode=GameMode.STANDARD;
+
     let labelChars = [];
     let charsToCol={};
 
@@ -105,10 +114,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function pixelClickHandler(row, col){
 
-        if(onePixelMoveMode){
-            toggleOnePixel(row, col);
-        } else {
+        if(mode===GameMode.STANDARD){
             makeMove(row, col);
+        } else if (mode===GameMode.ONE_PIXEL){
+            toggleOnePixel(row, col);
+        } else if (mode===GameMode.TOGGLE_ROW){
+            //не реализовано
+        } else if (mode===GameMode.TOGGLE_COLUMN){
+            //не реализовано
         }
 
         updateGameUI();
@@ -126,13 +139,18 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if(onePixelMoveMode){
+        if(mode===GameMode.STANDARD){
+            undoMove();
+        } else if (mode===GameMode.ONE_PIXEL){
             for (let i = 0; i < 67; i++) {
                 undoMove();
             }
-        } else {
-            undoMove();
+        } else if (mode===GameMode.TOGGLE_ROW){
+            //не реализовано
+        } else if (mode===GameMode.TOGGLE_COLUMN){
+            //не реализовано
         }
+
         updateGameUI();
     }
 
@@ -309,7 +327,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setupEvents(){
-        onePixelMoveModeCheckBox.addEventListener('click',onePixelMoveModeCheckBoxHandler);
         undoButton.addEventListener('click',undoButtonClickHandler);
         resetButton.addEventListener('click',resetButtonClickHandler);
         document.getElementById("history-play-btn").addEventListener('click',function(){
@@ -324,6 +341,16 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById("history-get-btn").addEventListener('click',function(){
             historyTextField.value=moves;
         })
+        document.querySelectorAll('input[name="option"]').forEach((input) => {
+            if (input.checked) {
+                mode = GameMode[input.value.toUpperCase()];
+            }
+
+            input.addEventListener('change', () => {
+                mode = GameMode[input.value.toUpperCase()];
+                console.log('Режим игры установлен на:', mode);
+            });
+        });
     }
 
     submitButton.addEventListener('click', () => {
