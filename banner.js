@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const undoButton = document.getElementById('undo-button');
     const resetButton = document.getElementById('reset-button');
     const onePixelMoveModeCheckBox = document.getElementById('one-pixel-move-mode');
+    const historyTextField = document.getElementById('history');
 
     let lights = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
@@ -110,6 +111,10 @@ document.addEventListener('DOMContentLoaded', () => {
             makeMove(row, col);
         }
 
+        updateGameUI();
+    }
+
+    function updateGameUI() {
         updateSubmitButton();
         updateBoard();
         checkBoardMatchesTz();
@@ -128,19 +133,14 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             undoMove();
         }
-
-        updateSubmitButton();
-        updateBoard();
-        checkBoardMatchesTz();
+        updateGameUI();
     }
 
     function resetButtonClickHandler(){
         while (moves.length>0){
             undoMove();
         }
-        updateSubmitButton();
-        updateBoard();
-        checkBoardMatchesTz();
+        updateGameUI();
     }
 
     function updateSubmitButton() {
@@ -282,9 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
-
-    undoButton.addEventListener('click',undoButtonClickHandler);
-    resetButton.addEventListener('click',resetButtonClickHandler);
+    ;
 
     function onePixelMoveModeCheckBoxHandler() {
         onePixelMoveMode=!onePixelMoveMode;
@@ -299,7 +297,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    onePixelMoveModeCheckBox.addEventListener('click',onePixelMoveModeCheckBoxHandler);
 
     function textToCol(text) {
         let col=charsToCol[text[0]]
@@ -309,6 +306,24 @@ document.addEventListener('DOMContentLoaded', () => {
     function textToRow(text) {
         let row=parseInt(text[1])
         return row;
+    }
+
+    function setupEvents(){
+        onePixelMoveModeCheckBox.addEventListener('click',onePixelMoveModeCheckBoxHandler);
+        undoButton.addEventListener('click',undoButtonClickHandler);
+        resetButton.addEventListener('click',resetButtonClickHandler);
+        document.getElementById("history-play-btn").addEventListener('click',function(){
+            let moves= historyTextField.value.split(",");
+            for (const move of moves) {
+                let col=textToCol(move);
+                let row=textToRow(move);
+                makeMove(row, col);
+            }
+            updateGameUI();
+        });
+        document.getElementById("history-get-btn").addEventListener('click',function(){
+            historyTextField.value=moves;
+        })
     }
 
     submitButton.addEventListener('click', () => {
@@ -371,6 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
         launchConfetti(0);
     }
 
+    setupEvents();
     initColumnLabels();
     initRowLabels();
     initBoard();
