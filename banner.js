@@ -119,9 +119,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (mode===GameMode.ONE_PIXEL){
             toggleOnePixel(row, col);
         } else if (mode===GameMode.TOGGLE_ROW){
-            //не реализовано
+            toggleRow(row);
         } else if (mode===GameMode.TOGGLE_COLUMN){
-            //не реализовано
+            toggleColumn(col);
         }
 
         updateGameUI();
@@ -233,6 +233,26 @@ document.addEventListener('DOMContentLoaded', () => {
             makeMove(i, col);
         }
     }
+
+    /**
+     * Переключает 1 строку сделав 60 ходов
+     */
+    function toggleRow(row){
+        for (let i = 0; i < boardWidth; i++) {
+            makeMove(row, i);
+        }
+    }
+
+    /**
+     * Переключает 1 столбец сделав 8 ходов
+     */
+    function toggleColumn( col){
+        for (let i = 0; i < boardHeight; i++) {
+            makeMove(i, col);
+        }
+    }
+
+
 
     function updateBoard() {
         const lightElements = board.querySelectorAll('.light');
