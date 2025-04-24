@@ -274,7 +274,7 @@
 </head>
 <body class="bg-slate-900 min-h-screen flex flex-col items-center justify-center p-4">
     <div class="text-center mb-5">
-        <h1 class="text-5xl font-bold text-[#f9d65d] mb-2">Добро пожаловать в наш родной<br>(overridden)</h1>
+        <h1 class="text-5xl font-bold text-[#f9d65d] mb-2">Добро пожаловать в наш родной</h1>
     </div>
     
     <div id="game-container" class="mb-8">
@@ -290,14 +290,26 @@
     </div>
     
     <div class="flex gap-4 mb-6">
-        <button id="reset-button" class="game-button primary">сброс</button>
+        <button id="undo-button" class="game-button undo">Отменить ход</button>
         <button id="tz-button" class="game-button primary">Техническое задание</button>
         <button id="submit-button" class="game-button success">Я починил</button>
-        <button id="undo-button" class="game-button undo">отменить ход</button>
+        <button id="reset-button" class="game-button primary">Cброс</button>
         <div>
-            <div id="one-pixel-move-mode" class="light off rounded-sm cursor-pointer"></div>
-            <div style="color: white">переключить пиксель<br>(67 ходов)</div>
+            <span style="display: inline-block" id="standard-move-mode" class="light off rounded-sm cursor-pointer"></span>
+            <span style="color: white">Обычный режим (1) </span><br>
+            <span style="display: inline-block" id="one-pixel-move-mode" class="light off rounded-sm cursor-pointer"></span>
+            <span style="color: white">Переключить пиксель (67)</span><br>
+            <span style="display: inline-block" id="row-move-mode1" class="light off rounded-sm cursor-pointer"></span>
+            <span style="color: white">Переключить строку (60)</span><br>
+            <span style="display: inline-block" id="col-move-mode1" class="light off rounded-sm cursor-pointer"></span>
+            <span style="color: white">Переключить столбец (8)</span><br>
         </div>
+    </div>
+
+    <div class="flex gap-4 mb-6">
+        <textarea id="history" spellcheck="false"></textarea>
+        <button id="play-button" class="game-button success">Выполнить</button>
+        <button id="play-button2" class="game-button success">Получить</button>
     </div>
     
     <div id="message" class="mt-6 text-xl font-bold text-transparent"></div>
