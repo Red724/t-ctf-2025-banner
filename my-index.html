@@ -59,7 +59,15 @@
 
 
     <div class="flex gap-4 mb-6">
-        <textarea id="history" spellcheck="false"></textarea>
+        <div>
+            <div class="ui-text">Решение:</div>
+            <textarea id="solution" spellcheck="false"></textarea>
+        </div>
+        <button id="solve-btn" class="game-button success">Найти решение</button>
+        <div>
+            <div class="ui-text">История ходов:</div>
+            <textarea id="history" spellcheck="false"></textarea>
+        </div>
         <button id="history-play-btn" class="game-button success">Выполнить</button>
         <button id="history-get-btn" class="game-button success">Получить</button>
     </div>

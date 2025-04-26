@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetButton = document.getElementById('reset-button');
     const onePixelMoveModeCheckBox = document.getElementById('one-pixel-move-mode');
     const historyTextField = document.getElementById('history');
+    const solutionTextField = document.getElementById('solution');
+    const solveButton = document.getElementById('solve-btn');
 
     let lights = [
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
@@ -42,6 +44,16 @@ document.addEventListener('DOMContentLoaded', () => {
         [0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, ],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
     ];
+
+    let needToggle=[];
+    for (let y = 0; y < boardHeight; y++) {
+        let row=[];
+        for (let x = 0; x < boardWidth; x++) {
+            row.push((lights[y][x] ^ tz[y][x]));
+        }
+        needToggle.push(row);
+    }
+
     let moves = [];
     let moveCount = 0;
     let mode=GameMode.STANDARD;
@@ -89,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
         board.innerHTML = '';
         moves = [];
         moveCount = 0;
-        updateSubmitButton();
+        //updateSubmitButton();
 
         for (let row = 0; row < boardHeight; row++) {
             for (let col = 0; col < boardWidth; col++) {
@@ -106,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        updateBoard();
+       // updateBoard();
         messageEl.textContent = '';
         messageEl.classList.add('text-transparent');
         messageEl.classList.remove('text-green-400');
@@ -158,6 +170,11 @@ document.addEventListener('DOMContentLoaded', () => {
         while (moves.length>0){
             undoMove();
         }
+        updateGameUI();
+    }
+
+    function solveButtonClickHandler(){
+        solve();
         updateGameUI();
     }
 
@@ -349,6 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function setupEvents(){
         undoButton.addEventListener('click',undoButtonClickHandler);
         resetButton.addEventListener('click',resetButtonClickHandler);
+        solveButton.addEventListener('click',solveButtonClickHandler);
         document.getElementById("history-play-btn").addEventListener('click',function(){
             let moves= historyTextField.value.split(",");
             for (const move of moves) {
@@ -437,4 +455,52 @@ document.addEventListener('DOMContentLoaded', () => {
     initColumnLabels();
     initRowLabels();
     initBoard();
+
+    function solve() {
+
+        let solution=[];
+        for (let y = 0; y < boardHeight; y++) {
+            let row=[];
+            for (let x = 0; x < boardWidth; x++) {
+                row.push(0);
+            }
+            solution.push(row);
+        }
+
+        for (let row = 0; row < boardHeight; row++) {
+            for (let col = 0; col < boardWidth; col++) {
+                if (needToggle[row][col]){
+                    makeMove(row, col);
+                    solution[row][col] = !solution[row][col];
+                    for (let i = 0; i < boardWidth; i++) {
+                        if(i===col)
+                            continue;
+                        makeMove(row, i);
+                        solution[row][i] = !solution[row][i];
+                    }
+                    for (let i = 0; i < boardHeight; i++) {
+                        if(i===row)
+                            continue;
+                        makeMove(i, col);
+                        solution[i][col] = !solution[i][col];
+                    }
+                }
+            }
+        }
+
+        let solutionMoves=[]
+        for (let row = 0; row < boardHeight; row++) {
+            for (let col = 0; col < boardWidth; col++) {
+                if (solution[row][col]){
+                    const moveNotation = labelChars[col] + row.toString();
+                    solutionMoves.push(moveNotation);
+                }
+            }
+        }
+
+        solutionTextField.value=solutionMoves.join(",");
+    }
+
+    updateGameUI();
+
 });
